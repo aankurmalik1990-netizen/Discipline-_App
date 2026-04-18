@@ -1,0 +1,410 @@
+import { useState, useEffect } from "react";
+
+const VIOLATIONS = [
+  { id: 1, label: "लंबे समय से अनुपस्थित", emoji: "📅", color: "#e74c3c", msg: (name) => `📋 *विषय: विद्यालय से निरंतर अनुपस्थिति के संबंध में औपचारिक सूचना।*\n\nसादर अभिवादन, GSBV RADHEY SHYAM PARK (1003152) के रिकॉर्ड के अनुसार आपका पुत्र *${name}* पिछले कई दिनों से निरंतर अनुपस्थित है। शिक्षा के अधिकार और बेहतर प्रदर्शन के लिए नियमित उपस्थिति अनिवार्य है। कृपया छात्र की अनुपस्थिति का उचित कारण स्पष्ट करने हेतु कल विद्यालय समय में कक्षा अध्यापक से संपर्क करें।` },
+  { id: 2, label: "हिंसा / अनुशासनहीनता", emoji: "⚡", color: "#c0392b", msg: (name) => `🚨 *विषय: गंभीर अनुशासनहीनता एवं हिंसक व्यवहार के संबंध में सूचना।*\n\nअत्यंत आवश्यक सूचना: आज विद्यालय परिसर में आपका पुत्र *${name}* अन्य छात्र के साथ गंभीर लड़ाई-झगड़े (हिंसा) में संलिप्त पाया गया है। विद्यालय की गरिमा और सुरक्षा नियमों के विरुद्ध यह व्यवहार असहनीय है। इस घटना पर आधिकारिक चर्चा हेतु आपको कल सुबह प्रधानाचार्य कार्यालय में अनिवार्य रूप से उपस्थित होना है।` },
+  { id: 3, label: "बिना अनुमति विद्यालय से प्रस्थान", emoji: "🏃", color: "#e67e22", msg: (name) => `⚠️ *विषय: सुरक्षा उल्लंघन एवं बिना अनुमति विद्यालय परिसर छोड़ने की सूचना।*\n\nमहत्वपूर्ण सूचना: आज मध्यंतर (Recess) या स्कूल समय के दौरान आपका पुत्र *${name}* बिना किसी गेट-पास या अनुमति के विद्यालय परिसर से बाहर पाया गया। छात्र की सुरक्षा हेतु यह एक गंभीर जोखिम है। भविष्य में इस प्रकार की पुनरावृत्ति होने पर छात्र का नाम काटने (Discharge) जैसी सख्त अनुशासनात्मक कार्यवाही की जा सकती है।` },
+  { id: 4, label: "कक्षा से अनुपस्थित (पीरियड में)", emoji: "🚪", color: "#f39c12", msg: (name) => `📋 *विषय: निर्धारित कालांश (Period) के दौरान कक्षा से अनुपस्थिति की सूचना।*\n\nसूचित किया जाता है कि आज औचक निरीक्षण के दौरान आपका पुत्र *${name}* निर्धारित पीरियड के समय अपनी कक्षा में उपस्थित नहीं था। अनुशासन का उल्लंघन करते हुए वह विद्यालय परिसर में अन्यत्र पाया गया। कृपया अपने स्तर पर छात्र को समय के सदुपयोग और विद्यालय नियमों के प्रति जागरूक करें।` },
+  { id: 5, label: "गृहकार्य अधूरा", emoji: "📚", color: "#8e44ad", msg: (name) => `📝 *विषय: शैक्षणिक प्रगति एवं अधूरा गृहकार्य (Homework) संबंधी सूचना।*\n\nनमस्ते, यह सूचित किया जाता है कि आपके पुत्र *${name}* द्वारा आज का निर्धारित गृहकार्य पूरा नहीं किया गया है। शैक्षणिक निरंतरता बनाए रखने के लिए घर पर नियमित अभ्यास आवश्यक है। आपसे अनुरोध है कि छात्र के गृहकार्य और नोटबुक की प्रतिदिन जांच करें ताकि उनकी प्रगति में कोई बाधा न आए।` },
+  { id: 6, label: "अन्य (Other)", emoji: "📌", color: "#2c3e50", msg: (name) => `📋 *विषय: विद्यालय अनुशासन रिकॉर्ड (Discipline Record) संबंधी सूचना।*\n\nसादर सूचित किया जाता है कि GSBV RADHEY SHYAM PARK (1003152) के अनुशासन पोर्टल पर आपके पुत्र *${name}* के विरुद्ध एक प्रविष्टि (Entry) दर्ज की गई है। इस संबंध में अधिक जानकारी और भविष्य की रूपरेखा तय करने हेतु आपसे विद्यालय में संपर्क की अपेक्षा की जाती है।` },
+];
+
+const INITIAL_CLASSES = [
+  { id: "c1", name: "Class 9A", students: [] },
+  { id: "c2", name: "Class 9B", students: [] },
+  { id: "c3", name: "Class 9C", students: [] },
+  { id: "c4", name: "Class 9D", students: [
+    { id: "s1",  name: "MOHD AMAANULLAH",      phone: "919891751833" },
+    { id: "s2",  name: "AYAN",                  phone: "918759031743" },
+    { id: "s3",  name: "MOHD SHEKH AADI",       phone: "919718419588" },
+    { id: "s4",  name: "MOHD SHEKH HAMZA",      phone: "919136041114" },
+    { id: "s5",  name: "MOHD SHAHIL",            phone: "918920825572" },
+    { id: "s6",  name: "MOHD ARSH",              phone: "919625172028" },
+    { id: "s7",  name: "MOHD SHIFAN",            phone: "919540841193" },
+    { id: "s8",  name: "MOHD ALFAIZ",            phone: "919871430212" },
+    { id: "s9",  name: "MOHD UMAIR",             phone: "919821764370" },
+    { id: "s10", name: "MOHAMMAD TAMJID",        phone: "919311961232" },
+    { id: "s11", name: "MOHD AAMIN",             phone: "919310379268" },
+    { id: "s12", name: "AYAN (SAMIMUDDIN)",      phone: "919911052138" },
+    { id: "s13", name: "AMAN",                   phone: "919718901252" },
+    { id: "s14", name: "MOHAMMAD ANAS",          phone: "919210736175" },
+    { id: "s15", name: "MOHD TARIK ANSARI",      phone: "919560415195" },
+    { id: "s16", name: "MOHD ANAS",              phone: "919560415195" },
+    { id: "s17", name: "MOHD SOHAIL",            phone: "919958220524" },
+    { id: "s18", name: "ATIF MALIK",             phone: "917818952729" },
+    { id: "s19", name: "MOHD FARAZ",             phone: "919389378415" },
+    { id: "s20", name: "AMAAN",                  phone: "919268186990" },
+    { id: "s21", name: "ADNAN ALI",              phone: "919899348076" },
+    { id: "s22", name: "MOHD AAYAN",             phone: "918595551017" },
+    { id: "s23", name: "MOHD ZAID (MUSEEN)",     phone: "919268267352" },
+    { id: "s24", name: "MOHD ARHAAN",            phone: "919354283749" },
+    { id: "s25", name: "HUZEFA",                 phone: "919625510386" },
+    { id: "s26", name: "MOHD KAMRAN",            phone: "919313559011" },
+    { id: "s27", name: "ABDUL REHMAN",           phone: "919953191814" },
+    { id: "s28", name: "MOHD CHAND",             phone: "919891786443" },
+    { id: "s29", name: "MOHAMMAD HASSAN RAZA",   phone: "919761060289" },
+    { id: "s30", name: "MOHAMMAD ARISH",         phone: "919717682354" },
+    { id: "s31", name: "MOHD KAIF KHAN",         phone: "919891726106" },
+    { id: "s32", name: "MOHD SAHIL",             phone: "919268262662" },
+    { id: "s33", name: "AAMIR",                  phone: "919355742717" },
+    { id: "s34", name: "MOHD ABEER",             phone: "916387495914" },
+    { id: "s35", name: "MOHAMMAD RAHIB",         phone: "919711406586" },
+    { id: "s36", name: "MOHD SAMI",              phone: "919871843079" },
+    { id: "s37", name: "RAYYAN",                 phone: "919315924044" },
+    { id: "s38", name: "AARISH ZAHID ANSARI",    phone: "919315924044" },
+    { id: "s39", name: "MD TOSIF",               phone: "919990440783" },
+    { id: "s40", name: "MAAZ AHMED",             phone: "919910172423" },
+    { id: "s41", name: "MOHD AREEB",             phone: "919871768075" },
+    { id: "s42", name: "SABIR",                  phone: "917838138157" },
+    { id: "s43", name: "MOHD ZAID (SHAMSHER)",   phone: "919818033144" },
+    { id: "s44", name: "MOHD TAUHEED",           phone: "918826294895" },
+    { id: "s45", name: "MOHD ASAD",              phone: "917037906200" },
+    { id: "s46", name: "MOHD AFFAN",             phone: "919953884512" },
+    { id: "s47", name: "MOHD AYAN",              phone: "917827573902" },
+    { id: "s48", name: "ALI HADI",               phone: "919540492867" },
+    { id: "s49", name: "ANKUR MALIK",            phone: "918006338560" },
+  ]},
+  { id: "c5", name: "Class 10A", students: [] },
+  { id: "c6", name: "Class 10B", students: [] },
+];
+
+// IndexedDB Helper Functions
+const DB_NAME = "DisciplineDB";
+const STORE_NAME = "appData";
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore(STORE_NAME);
+    };
+  });
+}
+
+async function saveData(key, value) {
+  try {
+    const db = await initDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(value, key);
+    return new Promise((resolve) => { tx.oncomplete = () => resolve(); });
+  } catch (e) { console.error("Save error:", e); }
+}
+
+async function loadData(key) {
+  try {
+    const db = await initDB();
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const request = tx.objectStore(STORE_NAME).get(key);
+    return new Promise((resolve) => { request.onsuccess = () => resolve(request.result); });
+  } catch (e) { console.error("Load error:", e); return null; }
+}
+
+export default function App() {
+  const [tab, setTab] = useState("home");
+  const [classes, setClasses] = useState(INITIAL_CLASSES);
+  const [violations, setViolations] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const [selClass, setSelClass] = useState("");
+  const [selStudent, setSelStudent] = useState("");
+  const [selViolation, setSelViolation] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const [newClass, setNewClass] = useState("");
+  const [editClassId, setEditClassId] = useState(null);
+  const [newStudentName, setNewStudentName] = useState("");
+  const [newStudentPhone, setNewStudentPhone] = useState("");
+
+  const [filterClass, setFilterClass] = useState("all");
+  const [filterStudent, setFilterStudent] = useState("all");
+
+  // Load data on mount
+  useEffect(() => {
+    async function load() {
+      const savedClasses = await loadData("classes");
+      const savedViolations = await loadData("violations");
+      if (savedClasses) setClasses(savedClasses);
+      if (savedViolations) setViolations(savedViolations);
+      setLoaded(true);
+    }
+    load();
+  }, []);
+
+  // Save classes whenever they change
+  useEffect(() => {
+    if (loaded) saveData("classes", classes);
+  }, [classes, loaded]);
+
+  // Save violations whenever they change
+  useEffect(() => {
+    if (loaded) saveData("violations", violations);
+  }, [violations, loaded]);
+
+  const currentClass = classes.find(c => c.id === selClass);
+  const currentStudent = currentClass?.students.find(s => s.id === selStudent);
+  const v = VIOLATIONS.find(vi => vi.id === selViolation);
+
+  const violationCounts = {};
+  violations.forEach(r => { violationCounts[r.studentId] = (violationCounts[r.studentId] || 0) + 1; });
+
+  function handleSubmit() {
+    if (!currentClass || !currentStudent || !v) return;
+    const record = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString("en-IN"),
+      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+      classId: currentClass.id, className: currentClass.name,
+      studentId: currentStudent.id, studentName: currentStudent.name,
+      violationId: v.id, violationLabel: v.label,
+    };
+    setViolations(prev => [record, ...prev]);
+    const phone = currentStudent.phone?.replace(/\D/g, "") || "";
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(v.msg(currentStudent.name))}`
+      : `https://wa.me/?text=${encodeURIComponent(v.msg(currentStudent.name))}`;
+    window.open(url, "_blank");
+    setSubmitted(true);
+    setTimeout(() => { setSubmitted(false); setSelClass(""); setSelStudent(""); setSelViolation(null); }, 2500);
+  }
+
+  function addClass() {
+    if (!newClass.trim()) return;
+    setClasses(prev => [...prev, { id: "cx" + Date.now(), name: newClass.trim(), students: [] }]);
+    setNewClass("");
+  }
+
+  function addStudent(classId) {
+    if (!newStudentName.trim()) return;
+    setClasses(prev => prev.map(c => c.id === classId
+      ? { ...c, students: [...c.students, { id: "sx" + Date.now(), name: newStudentName.trim(), phone: newStudentPhone.trim() }] }
+      : c));
+    setNewStudentName(""); setNewStudentPhone(""); setEditClassId(null);
+  }
+
+  function deleteStudent(classId, studentId) {
+    setClasses(prev => prev.map(c => c.id === classId ? { ...c, students: c.students.filter(s => s.id !== studentId) } : c));
+  }
+
+  const filtered = violations.filter(r =>
+    (filterClass === "all" || r.classId === filterClass) &&
+    (filterStudent === "all" || r.studentId === filterStudent)
+  );
+  const filterClassStudents = filterClass !== "all" ? (classes.find(c => c.id === filterClass)?.students || []) : [];
+
+  const bg = "#0f172a", card = "#1e293b", border = "#334155", accent = "#60a5fa", muted = "#64748b", dim = "#475569";
+  const inputStyle = { width: "100%", background: bg, color: "#e2e8f0", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, boxSizing: "border-box", marginBottom: 6 };
+
+  if (!loaded) return <div style={{ background: bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: accent, fontSize: 20 }}>⏳ लोड हो रहा है...</div>;
+
+  return (
+    <div style={{ fontFamily: "'Segoe UI', Tahoma, sans-serif", background: bg, minHeight: "100vh", color: "#e2e8f0", maxWidth: 480, margin: "0 auto", paddingBottom: 72 }}>
+
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #1e3a5f, #0f172a)", padding: "14px 18px", borderBottom: `1px solid ${border}`, display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontSize: 30 }}>🏫</span>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: accent, letterSpacing: 1 }}>DISCIPLINE</div>
+          <div style={{ fontSize: 10, color: muted }}>GSBV RADHEY SHYAM PARK (1003152)</div>
+        </div>
+      </div>
+
+      <div style={{ padding: "14px 14px 0" }}>
+
+        {/* ─── HOME ─── */}
+        {tab === "home" && (
+          submitted ? (
+            <div style={{ textAlign: "center", paddingTop: 60 }}>
+              <div style={{ fontSize: 64 }}>✅</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#4ade80", marginTop: 14 }}>रिपोर्ट दर्ज हो गई!</div>
+              <div style={{ color: "#94a3b8", marginTop: 6 }}>WhatsApp संदेश अभिभावक को भेजा गया</div>
+            </div>
+          ) : (
+            <div>
+              {/* STEP 1 */}
+              <div style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: accent, fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>STEP 1 — कक्षा चुनें</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {classes.map(c => (
+                    <button key={c.id}
+                      onClick={() => { setSelClass(c.id); setSelStudent(""); setSelViolation(null); }}
+                      style={{ padding: "8px 14px", borderRadius: 8, border: `2px solid ${selClass === c.id ? accent : border}`, background: selClass === c.id ? "#1d4ed8" : "transparent", color: selClass === c.id ? "#fff" : "#94a3b8", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* STEP 2 */}
+              {currentClass && (
+                <div style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: accent, fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>
+                    STEP 2 — छात्र चुनें &nbsp;<span style={{ color: muted, fontWeight: 400 }}>({currentClass.students.length} छात्र)</span>
+                  </div>
+                  {currentClass.students.length === 0
+                    ? <div style={{ color: dim, fontSize: 13 }}>इस कक्षा में कोई छात्र नहीं है।</div>
+                    : currentClass.students.map(s => (
+                      <button key={s.id}
+                        onClick={() => { setSelStudent(s.id); setSelViolation(null); }}
+                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: 6, padding: "10px 12px", borderRadius: 8, border: `2px solid ${selStudent === s.id ? accent : border}`, background: selStudent === s.id ? "#1d4ed8" : "transparent", color: selStudent === s.id ? "#fff" : "#cbd5e1", fontWeight: 600, fontSize: 14, cursor: "pointer", textAlign: "left" }}>
+                        <span>👤 {s.name}</span>
+                        {violationCounts[s.id] > 0 && (
+                          <span style={{ background: "#dc2626", color: "#fff", borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
+                            {violationCounts[s.id]}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  }
+                </div>
+              )}
+
+              {/* STEP 3 */}
+              {currentStudent && (
+                <div style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: accent, fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>STEP 3 — उल्लंघन का प्रकार</div>
+                  {VIOLATIONS.map(vi => (
+                    <button key={vi.id}
+                      onClick={() => setSelViolation(vi.id)}
+                      style={{ display: "block", width: "100%", marginBottom: 8, padding: "11px 14px", borderRadius: 8, border: `2px solid ${selViolation === vi.id ? vi.color : border}`, background: selViolation === vi.id ? vi.color + "33" : "transparent", color: selViolation === vi.id ? "#fff" : "#cbd5e1", fontWeight: 600, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                      {vi.emoji} {vi.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* SUBMIT */}
+              {selViolation && currentStudent && (
+                <div style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12, lineHeight: 1.8 }}>
+                    👤 <strong style={{ color: "#e2e8f0" }}>{currentStudent.name}</strong><br />
+                    🏫 {currentClass?.name}<br />
+                    <span style={{ color: v?.color }}>⚠️ {v?.label}</span>
+                    {!currentStudent.phone && <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>⚠️ नंबर नहीं — WhatsApp बिना नंबर के खुलेगा</div>}
+                  </div>
+                  <button onClick={handleSubmit}
+                    style={{ width: "100%", padding: 14, borderRadius: 10, border: "none", background: "linear-gradient(135deg, #25D366, #128C7E)", color: "#fff", fontWeight: 800, fontSize: 16, cursor: "pointer", letterSpacing: 1 }}>
+                    📱 WhatsApp अलर्ट भेजें
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        )}
+
+        {/* ─── RECORDS ─── */}
+        {tab === "records" && (
+          <div>
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>सेमेस्टर रिकॉर्ड</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+              {[{ label: "कुल रिपोर्ट", val: violations.length, color: accent },
+                { label: "प्रभावित छात्र", val: new Set(violations.map(r => r.studentId)).size, color: "#f87171" }
+              ].map(s => (
+                <div key={s.label} style={{ background: card, borderRadius: 10, padding: "14px 12px" }}>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: muted }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <select value={filterClass} onChange={e => { setFilterClass(e.target.value); setFilterStudent("all"); }}
+                style={{ flex: 1, background: card, color: "#e2e8f0", border: `1px solid ${border}`, borderRadius: 8, padding: "8px 10px", fontSize: 13 }}>
+                <option value="all">सभी कक्षाएं</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {filterClass !== "all" && (
+                <select value={filterStudent} onChange={e => setFilterStudent(e.target.value)}
+                  style={{ flex: 1, background: card, color: "#e2e8f0", border: `1px solid ${border}`, borderRadius: 8, padding: "8px 10px", fontSize: 13 }}>
+                  <option value="all">सभी छात्र</option>
+                  {filterClassStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              )}
+            </div>
+            {filtered.length === 0
+              ? <div style={{ textAlign: "center", padding: 40, color: dim }}>कोई रिकॉर्ड नहीं मिला</div>
+              : filtered.map(r => {
+                const vInfo = VIOLATIONS.find(vi => vi.id === r.violationId);
+                return (
+                  <div key={r.id} style={{ background: card, borderRadius: 10, padding: "12px 14px", marginBottom: 8, borderLeft: `3px solid ${vInfo?.color || accent}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: "#e2e8f0" }}>👤 {r.studentName}</div>
+                        <div style={{ fontSize: 12, color: muted }}>{r.className}</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: dim, textAlign: "right" }}>{r.date}<br />{r.time}</div>
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 13, color: vInfo?.color }}>{vInfo?.emoji} {r.violationLabel}</div>
+                  </div>
+                );
+              })
+            }
+          </div>
+        )}
+
+        {/* ─── SETTINGS ─── */}
+        {tab === "settings" && (
+          <div>
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>कक्षा एवं छात्र प्रबंधन</div>
+            <div style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: accent, fontWeight: 700, marginBottom: 10 }}>+ नई कक्षा जोड़ें</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input value={newClass} onChange={e => setNewClass(e.target.value)} placeholder="जैसे Class 9E"
+                  style={{ ...inputStyle, marginBottom: 0, flex: 1 }} />
+                <button onClick={addClass}
+                  style={{ padding: "9px 16px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>जोड़ें</button>
+              </div>
+            </div>
+
+            {classes.map(c => (
+              <div key={c.id} style={{ background: card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontWeight: 700, color: accent }}>🏫 {c.name} <span style={{ color: dim, fontSize: 12, fontWeight: 400 }}>({c.students.length})</span></div>
+                </div>
+                {c.students.map(s => (
+                  <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${border}` }}>
+                    <div>
+                      <div style={{ fontSize: 13, color: "#cbd5e1" }}>👤 {s.name}</div>
+                      <div style={{ fontSize: 11, color: dim }}>{s.phone || "नंबर नहीं"}</div>
+                    </div>
+                    <button onClick={() => deleteStudent(c.id, s.id)}
+                      style={{ background: "transparent", color: "#f87171", border: `1px solid #7f1d1d`, borderRadius: 6, padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>हटाएं</button>
+                  </div>
+                ))}
+                {editClassId === c.id ? (
+                  <div style={{ marginTop: 10 }}>
+                    <input value={newStudentName} onChange={e => setNewStudentName(e.target.value)} placeholder="छात्र का नाम" style={inputStyle} />
+                    <input value={newStudentPhone} onChange={e => setNewStudentPhone(e.target.value)} placeholder="WhatsApp नं. जैसे 919812345678" style={{ ...inputStyle, marginBottom: 8 }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => addStudent(c.id)}
+                        style={{ flex: 1, padding: 9, background: "#15803d", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>सहेजें</button>
+                      <button onClick={() => setEditClassId(null)}
+                        style={{ padding: "9px 14px", background: border, color: "#94a3b8", border: "none", borderRadius: 8, cursor: "pointer" }}>रद्द</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setEditClassId(c.id); setNewStudentName(""); setNewStudentPhone(""); }}
+                    style={{ marginTop: 10, width: "100%", padding: 8, background: "transparent", color: accent, border: `1px dashed ${border}`, borderRadius: 8, cursor: "pointer", fontSize: 13 }}>
+                    + छात्र जोड़ें
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+
+      {/* Bottom Nav */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: bg, borderTop: `1px solid ${border}`, display: "flex" }}>
+        {[{ id: "home", emoji: "🏠", label: "रिपोर्ट" }, { id: "records", emoji: "📊", label: "रिकॉर्ड" }, { id: "settings", emoji: "⚙️", label: "सेटिंग्स" }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ flex: 1, padding: "11px 0", background: "transparent", border: "none", color: tab === t.id ? accent : dim, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <span style={{ fontSize: 20 }}>{t.emoji}</span>
+            <span style={{ fontSize: 10, fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
